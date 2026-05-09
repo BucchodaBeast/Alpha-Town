@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Town — Intelligence Operating Environment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="city.css">
+</head>
+<body>
+    <!-- Boot Sequence -->
+    <div id="boot-screen">
+        <div class="boot-content">
+            <div class="boot-logo">ALPHA TOWN</div>
+            <div class="boot-sub">INTELLIGENCE OPERATING ENVIRONMENT v1.0.0</div>
+            <div class="boot-terminal" id="boot-terminal"></div>
+            <div class="boot-progress">
+                <div class="boot-bar" id="boot-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" style="display:none;">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <div class="top-left">
+                <div class="logo-mark">AT</div>
+                <div class="logo-text">ALPHA TOWN</div>
+                <div class="env-badge">PROD</div>
+            </div>
+            <div class="top-center">
+                <div class="global-status">
+                    <span class="status-dot active"></span>
+                    <span class="status-text">SYSTEM ONLINE</span>
+                    <span class="status-divider">|</span>
+                    <span id="global-uptime">00:00:00</span>
+                    <span class="status-divider">|</span>
+                    <span id="global-signals">0 signals</span>
+                    <span class="status-divider">|</span>
+                    <span id="global-briefs">0 briefs</span>
+                </div>
+            </div>
+            <div class="top-right">
+                <div class="clock" id="clock">00:00:00 UTC</div>
+                <div class="user-badge">GUEST</div>
+            </div>
+        </header>
+
+        <!-- Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar: Agent Grid -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <span>AGENT NETWORK</span>
+                    <span class="agent-count" id="agent-count">14/14</span>
+                </div>
+                <div class="agent-grid" id="agent-grid"></div>
+
+                <div class="sidebar-section">
+                    <div class="section-title">DATA FLOW</div>
+                    <canvas id="flow-canvas" width="280" height="120"></canvas>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-title">SYSTEM LOG</div>
+                    <div class="system-log" id="system-log"></div>
+                </div>
+            </aside>
+
+            <!-- Center: Intelligence Feed -->
+            <main class="feed-area">
+                <div class="feed-header">
+                    <div class="feed-tabs">
+                        <button class="feed-tab active" data-filter="all">ALL SIGNALS</button>
+                        <button class="feed-tab" data-filter="alert">ALERTS</button>
+                        <button class="feed-tab" data-filter="breakthrough">BREAKTHROUGHS</button>
+                        <button class="feed-tab" data-filter="opportunity">OPPORTUNITIES</button>
+                    </div>
+                    <div class="feed-controls">
+                        <button class="btn-icon" onclick="toggleAutoScroll()" id="autoscroll-btn" title="Auto-scroll">⟳</button>
+                        <button class="btn-icon" onclick="refreshAll()" title="Refresh">↻</button>
+                    </div>
+                </div>
+                <div class="feed-stream" id="feed-stream">
+                    <div class="feed-empty">Initializing signal receptors...</div>
+                </div>
+            </main>
+
+            <!-- Right Panel: Briefs & Details -->
+            <aside class="right-panel" id="right-panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-panel="briefs">ORACLE BRIEFS</button>
+                    <button class="panel-tab" data-panel="convergence">CONVERGENCE</button>
+                    <button class="panel-tab" data-panel="jobs">OPPORTUNITIES</button>
+                </div>
+
+                <div class="panel-content" id="panel-briefs">
+                    <div class="briefs-list" id="briefs-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">◈</div>
+                            <div class="empty-title">No convergence detected</div>
+                            <div class="empty-sub">Oracle monitors all agents for multi-source signal alignment</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-content hidden" id="panel-convergence">
+                    <div class="convergence-matrix" id="convergence-matrix"></div>
+                </div>
+
+                <div class="panel-content hidden" id="panel-jobs">
+                    <div class="jobs-list" id="jobs-list">
+                        <div class="empty-state">
+                            <div class="empty-icon">◉</div>
+                            <div class="empty-title">SCOUT scanning</div>
+                            <div class="empty-sub">Cross-referencing agent signals with opportunity vectors</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Bottom Bar -->
+        <footer class="bottom-bar">
+            <div class="bottom-left">
+                <span class="metric">
+                    <span class="metric-label">LATENCY</span>
+                    <span class="metric-value" id="metric-latency">--ms</span>
+                </span>
+                <span class="metric">
+                    <span class="metric-label">THROUGHPUT</span>
+                    <span class="metric-value" id="metric-throughput">--/min</span>
+                </span>
+                <span class="metric">
+                    <span class="metric-label">LAST SYNC</span>
+                    <span class="metric-value" id="metric-last-sync">--</span>
+                </span>
+            </div>
+            <div class="bottom-center">
+                <div class="ticker" id="ticker">
+                    <span class="ticker-item">ALPHA TOWN INTELLIGENCE NETWORK — STANDBY</span>
+                </div>
+            </div>
+            <div class="bottom-right">
+                <button class="btn-trigger" onclick="triggerAllAgents()">⚡ TRIGGER ALL</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Agent Detail Modal -->
+    <div class="modal-overlay" id="agent-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-agent">
+                    <div class="modal-avatar" id="modal-avatar">M</div>
+                    <div>
+                        <div class="modal-name" id="modal-name">MARCUS</div>
+                        <div class="modal-district" id="modal-district">THE EXCHANGE</div>
+                    </div>
+                </div>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-personality" id="modal-personality"></div>
+                <div class="modal-stats">
+                    <div class="modal-stat">
+                        <div class="modal-stat-value" id="modal-posts">0</div>
+                        <div class="modal-stat-label">SIGNALS</div>
+                    </div>
+                    <div class="modal-stat">
+                        <div class="modal-stat-value" id="modal-confidence">0%</div>
+                        <div class="modal-stat-label">AVG CONF</div>
+                    </div>
+                    <div class="modal-stat">
+                        <div class="modal-stat-value" id="modal-interval">--</div>
+                        <div class="modal-stat-label">INTERVAL</div>
+                    </div>
+                </div>
+                <div class="modal-feed" id="modal-feed"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
