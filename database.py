@@ -536,5 +536,6 @@ class Database:
                 cursor.execute('DELETE FROM seen_items WHERE seen_at < ?', (cutoff,))
                 deleted = cursor.rowcount
                 conn.commit()
-                logger.info(f"Cleaned up {deleted} stale seen_items")
-              db = Database()
+                logger.info(f"Cleaned {deleted} old seen_items")
+
+db = Database()
