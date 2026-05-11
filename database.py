@@ -537,3 +537,4 @@ class Database:
                 deleted = cursor.rowcount
                 conn.commit()
                 logger.info(f"Cleaned up {deleted} stale seen_items")
+              db = Database()
