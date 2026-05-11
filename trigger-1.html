@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alpha Town — Control</title>
+<style>
+  body { background: #040810; color: #8ba8c4; font-family: monospace; padding: 20px; margin: 0; }
+  h1 { color: #00d4aa; font-size: 16px; letter-spacing: 0.2em; margin-bottom: 4px; }
+  .sub { color: #334455; font-size: 11px; margin-bottom: 20px; }
+  .key-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+  #admin-key {
+    flex: 1; padding: 12px;
+    background: #070f1a; border: 1px solid #1a2a3a;
+    color: #00d4aa; font-family: monospace; font-size: 13px;
+    border-radius: 4px; outline: none;
+  }
+  #admin-key:focus { border-color: #00d4aa; }
+  #save-key {
+    padding: 12px 16px; background: #0a1f10;
+    border: 1px solid #00d4aa; color: #00d4aa;
+    font-family: monospace; font-size: 12px;
+    border-radius: 4px; cursor: pointer;
+  }
+  .key-status { font-size: 10px; color: #334455; margin-bottom: 20px; }
+  .key-status.set { color: #00d4aa; }
+  .btn {
+    display: block; width: 100%; padding: 16px; margin-bottom: 10px;
+    border: 1px solid #1a2a3a; background: #070f1a; color: #8ba8c4;
+    font-family: monospace; font-size: 13px; border-radius: 4px;
+    cursor: pointer; text-align: left; box-sizing: border-box;
+  }
+  .btn .status { float: right; font-size: 11px; color: #334455; }
+  .btn.running { border-color: #ffaa00; color: #ffaa00; }
+  .btn.done { border-color: #00d4aa; color: #00d4aa; }
+  .btn.error { border-color: #ff3333; color: #ff3333; }
+  #btn-all { background: #0a1f10; border-color: #00d4aa; color: #00d4aa; font-size: 14px; font-weight: bold; margin-bottom: 20px; padding: 18px; }
+  hr { border: none; border-top: 1px solid #1a2a3a; margin: 16px 0; }
+  #log { margin-top: 20px; padding: 14px; background: #020608; border: 1px solid #1a2a3a; border-radius: 4px; font-size: 11px; min-height: 80px; max-height: 260px; overflow-y: auto; }
+  .log-line { margin-bottom: 3px; line-height: 1.4; color: #556688; }
+  .log-line.ok { color: #00d4aa; }
+  .log-line.err { color: #ff3333; }
+  .log-line.info { color: #ffaa00; }
+</style>
+</head>
+<body>
+<h1>ALPHA TOWN // CONTROL</h1>
+<div class="sub">Intelligence agent trigger panel</div>
+
+<div class="key-row">
+  <input type="password" id="admin-key" placeholder="Paste your ADMIN_API_KEY here..." />
+  <button id="save-key" onclick="saveKey()">SAVE</button>
+</div>
+<div class="key-status" id="key-status">⬤ No key set</div>
+
+<button class="btn" id="btn-all" onclick="triggerAll()">⚡ RUN ALL AGENTS<span class="status" id="status-all">READY</span></button>
+<hr>
+<button class="btn" onclick="trigger('KRON')">📡 KRON — News<span class="status" id="status-KRON">READY</span></button>
+<button class="btn" onclick="trigger('PULSE')">💜 PULSE — Social<span class="status" id="status-PULSE">READY</span></button>
+<button class="btn" onclick="trigger('MARCUS')">🏢 MARCUS — Markets<span class="status" id="status-MARCUS">READY</span></button>
+<button class="btn" onclick="trigger('SCOUT')">💼 SCOUT — Opportunity<span class="status" id="status-SCOUT">READY</span></button>
+<button class="btn" onclick="trigger('VEXA')">🏥 VEXA — Health<span class="status" id="status-VEXA">READY</span></button>
+<button class="btn" onclick="trigger('SYNTHESIS')">🔬 SYNTHESIS — Science<span class="status" id="status-SYNTHESIS">READY</span></button>
+<button class="btn" onclick="trigger('RAZOR')">🔴 RAZOR — Insider<span class="status" id="status-RAZOR">READY</span></button>
+<button class="btn" onclick="trigger('WATT')">⚡ WATT — Energy<span class="status" id="status-WATT">READY</span></button>
+<button class="btn" onclick="trigger('HULL')">⚓ HULL — Shipping<span class="status" id="status-HULL">READY</span></button>
+<button class="btn" onclick="trigger('STATUTE')">⚖️ STATUTE — Regulation<span class="status" id="status-STATUTE">READY</span></button>
+<button class="btn" onclick="trigger('PARCEL')">🏛️ PARCEL — Real Estate<span class="status" id="status-PARCEL">READY</span></button>
+<button class="btn" onclick="trigger('GAIA')">🌍 GAIA — Climate<span class="status" id="status-GAIA">READY</span></button>
+<button class="btn" onclick="trigger('ODDS')">🎰 ODDS — Predictions<span class="status" id="status-ODDS">READY</span></button>
+<button class="btn" onclick="trigger('CIPHER')">🏴 CIPHER — Geopolitics<span class="status" id="status-CIPHER">READY</span></button>
+<button class="btn" onclick="trigger('ORACLE')" style="border-color:#aa44ff;color:#aa44ff">🔮 ORACLE — Synthesis<span class="status" id="status-ORACLE">READY</span></button>
+
+<div id="log"><div class="log-line">// Ready. Enter key above and tap SAVE, then RUN ALL.</div></div>
+
+<script>
+const BASE = window.location.origin;
+let adminKey = sessionStorage.getItem('at_key') || '';
+
+window.addEventListener('load', () => {
+  if (adminKey) {
+    document.getElementById('admin-key').value = adminKey;
+    updateKeyStatus();
+  }
+});
+
+document.getElementById('admin-key').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveKey();
+});
+
+function saveKey() {
+  adminKey = document.getElementById('admin-key').value.trim();
+  sessionStorage.setItem('at_key', adminKey);
+  updateKeyStatus();
+  log('Key saved for this session ✓', 'ok');
+}
+
+function updateKeyStatus() {
+  const el = document.getElementById('key-status');
+  if (adminKey) {
+    el.textContent = '⬤ Key set — ready';
+    el.className = 'key-status set';
+  } else {
+    el.textContent = '⬤ No key set';
+    el.className = 'key-status';
+  }
+}
+
+function log(msg, type) {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + (type || 'info');
+  const t = new Date().toISOString().split('T')[1].split('.')[0];
+  line.textContent = '[' + t + '] ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStatus(id, text, cls) {
+  const el = document.getElementById('status-' + id);
+  if (el) el.textContent = text;
+  const btn = id === 'all'
+    ? document.getElementById('btn-all')
+    : el?.closest('.btn');
+  if (btn) btn.className = 'btn ' + (cls || '');
+}
+
+async function trigger(agent) {
+  if (!adminKey) { log('Enter and SAVE your key first!', 'err'); return; }
+  setStatus(agent, 'RUNNING...', 'running');
+  log('Triggering ' + agent + '...', 'info');
+  try {
+    const resp = await fetch(BASE + '/api/trigger/' + agent, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Key': adminKey }
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      const n = data.items_processed ?? data.items ?? '?';
+      setStatus(agent, 'DONE (' + n + ')', 'done');
+      log(agent + ' ✓ — ' + n + ' items', 'ok');
+    } else {
+      setStatus(agent, 'ERROR', 'error');
+      log(agent + ' ✗ — ' + JSON.stringify(data), 'err');
+    }
+  } catch(e) {
+    setStatus(agent, 'FAILED', 'error');
+    log(agent + ' ✗ — ' + e.message, 'err');
+  }
+}
+
+async function triggerAll() {
+  if (!adminKey) { log('Enter and SAVE your key first!', 'err'); return; }
+  const agents = ['KRON','PULSE','MARCUS','SCOUT','VEXA','SYNTHESIS',
+                  'RAZOR','WATT','HULL','STATUTE','PARCEL','GAIA','ODDS','CIPHER'];
+  setStatus('all', 'RUNNING...', 'running');
+  log('Running all field agents...', 'info');
+  for (const a of agents) {
+    await trigger(a);
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  log('Field agents done. Running ORACLE...', 'info');
+  await trigger('ORACLE');
+  setStatus('all', 'COMPLETE ✓', 'done');
+  log('Done! Refresh the main app to see signals.', 'ok');
+}
+</script>
+</body>
+</html>
